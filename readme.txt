@@ -1,3 +1,1 @@
-Git is a distributioned version control system.
-Git is free software.
-
+EventPump是一个基于libevent库的Reactor网络库;
