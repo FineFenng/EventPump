@@ -7,11 +7,13 @@
 
 
 #include <functional>
+#include <event2/util.h>
 
 namespace eventpump
 {
 typedef std::function<void()> ReadableCallback;
 typedef std::function<void()> WritableCallback;
+typedef std::function<void(int, struct sockaddr)> NewConnectionCallback;
 
 }
 
