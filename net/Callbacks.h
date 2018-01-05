@@ -7,14 +7,22 @@
 
 
 #include <functional>
-#include <event2/util.h>
+#include "SocketsOps.h"
+#include "InetAddress.h"
+
 
 namespace eventpump
 {
+
+namespace net
+{
+
 typedef std::function<void()> ReadableCallback;
 typedef std::function<void()> WritableCallback;
-typedef std::function<void(int, struct sockaddr)> NewConnectionCallback;
+typedef std::function<void(HSocket, InetAddress&)> NewConnectionCallback;
 
+
+}
 }
 
 #endif //EVENTPUMP_CALLBACKS_H

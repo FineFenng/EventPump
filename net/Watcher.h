@@ -58,11 +58,11 @@ public:
     int fd() const { return sockfd_;}
     struct ev_io* io() const { return io_; }
 
+	void removeWathcer();
 private:
     void init();
     void handle(int revents);
     void updateWatcher();
-    void removeWathcer();
 private:
 
     ssize_t index_;

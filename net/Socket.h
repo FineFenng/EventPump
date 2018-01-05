@@ -6,7 +6,6 @@
 #define EVENTPUMP_SOCKET_H
 
 #include <boost/noncopyable.hpp>
-#include <event2/util.h>
 
 #include "SocketsOps.h"
 

@@ -11,6 +11,9 @@
 
 #include "Callbacks.h"
 
+#include "Socket.h"
+#include "Watcher.h"
+
 
 
 namespace eventpump
@@ -21,23 +24,28 @@ namespace net
 
 class Pump;
 class InetAddress
+class Watcher;
 class Acceptor : boost::noncopyable
 {
 public:
     Acceptor(Pump* pump, InetAddress& listenAddr, bool reuseport);
     ~Acceptor();
 
-    void listen(const char* serverIp, unsigned short serverPort);
     void setNewConnectionCallback(const NewConnectionCallback& cb ) { newConnectionCallback_ = cb; }
+	void listen();
+	bool isListenig() const;
 
+	void handleRead();
 public:
+private:
 
 
 
 private:
-
-    EventPump* eventPump_;
-    struct evconnlistener* listener_;
+	Pump* pump_;
+	Socket socket_;
+	Watcher watcher_;
+	bool listening_;
     NewConnectionCallback newConnectionCallback_;
 
 };

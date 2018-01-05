@@ -3,15 +3,53 @@
 //
 
 #include "Acceptor.h"
+#include <glog/logging.h>
 
-#include <event2/listener.h>
 using namespace eventpump::net;
 
-
-void Acceptor::listen(const char* serverIp, unsigned short serverPort)
+Acceptor::Acceptor(Pump* pump, InetAddress& listenAddr, bool reuseport)
+: pump_(pump), socket_(socketops::SocketOpen(SOCK_STREAM)),
+  watcher_(pump_, socket_.fd()), listening_(false), newConnectionCallback_(nullptr)
 {
-    listener_ = evconnlistener_new_bind(eventPump_->eventBase(), )
-
-
-
+	watcher_.setReadableCallback(std::bind(&Acceptor::handleRead, this));
 }
+
+Acceptor::~Acceptor()
+{
+	watcher_.disableAll();
+	watcher_.removeWathcer();
+}
+void Acceptor::handleRead()
+{
+	struct sockaddr_in peeraddr;
+
+	HSocket connfd = socketops::SocketAccept(socket_.fd(), &peeraddr);
+	if (socketops::IsValidSocketHandle(connfd)) {
+		if (newConnectionCallback_) {
+			newConnectionCallback_(connfd, &peeraddr);
+		} else {
+			socketops::SocketClose(connfd);
+		}
+	}
+	LOG(FATAL) << "todo";
+}
+
+void Acceptor::listen()
+{
+	listening_ = true;
+	socket_.listen(30);
+	watcher_.enableReadable();
+}
+
+bool Acceptor::isListenig() const
+{
+	return listening_;
+}
+
+
+
+
+
+
+
+

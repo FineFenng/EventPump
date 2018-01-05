@@ -11,7 +11,7 @@
 using namespace eventpump::net;
 
 Pump::Pump(BACKEND flags)
-: flags_(flags), loop_(nullptr)
+: flags_(flags), loop_(nullptr), running_(false)
 {
 
     if (t_pump == nullptr) {

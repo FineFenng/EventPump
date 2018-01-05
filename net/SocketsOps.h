@@ -94,63 +94,15 @@ void SocketSend(HSocket hs, const char* ptr, int nbytes, transresult_t& rt);
 
 void SocketRecv(HSocket hs, char* ptr, int nbytes, transresult_t& rt);
 
+struct sockaddr_in SocketGetLocalAddr(HSocket hs);
+struct sockaddr_in SocketGetPeerAddr(HSocket hs);
 
-/*
-void SocketTryRecv(HSocket hs, char* ptr, int nbytes, int milliseconds, transresult_t& rt);
 
-void SocketTrySend(HSocket hs, const char* ptr, int nbytes, int milliseconds, transresult_t& rt);
 
-void SocketClearRecvBuffer(HSocket hs);
- */
+
+
 }
 }
 }
-
-
-/*
-class CSockWrap
-{
-public:
-
-    CSockWrap(int tcpudp);
-
-    ~CSockWrap();
-
-    void SetAddress(const char* ip, int port);
-
-    void SetAddress(sockaddr_in* addr);
-
-    int SetTimeOut(int recvtimeout, int sendtimeout, int lingertimeout);
-
-    int SetBufferSize(int recvbuffersize, int sendbuffersize);
-
-    int SetBlock(bool bblock);
-
-    HSocket GetHandle() { return m_hSocket; }
-
-    void Reopen(bool bForceClose);
-
-    void Close();
-
-    transresult_t Send(void* ptr, int nbytes);
-
-    transresult_t Recv(void* ptr, int nbytes);
-
-    transresult_t TrySend(void* ptr, int nbytes, int milliseconds);
-
-    transresult_t TryRecv(void* ptr, int nbytes, int milliseconds);
-
-    void ClearRecvBuffer();
-
-protected:
-    HSocket m_hSocket;
-    sockaddr_in m_stAddr;
-    int m_tcpudp;
-};
- */
-
-
-
-
 
 #endif //EVENTPUMP_CSOCKETWRAP_H

@@ -15,7 +15,7 @@ namespace eventpump
 {
 enum class BACKEND : unsigned int
 {
-    kDefault = 0,
+    kDefault = EVFLAG_AUTO,
     KSelect = EVBACKEND_SELECT,
     KPoll = EVBACKEND_POLL,
     KEPoll = EVBACKEND_EPOLL,
@@ -42,7 +42,6 @@ class Pump : boost::noncopyable
 public:
 
     explicit Pump(BACKEND backend);
-
     Pump();
 
     ~Pump();
@@ -58,10 +57,10 @@ public:
     void removeWatcher(Watcher* watcher);
 
 
-
 private:
     BACKEND flags_;
     struct ev_loop* loop_;
+	bool running_;
 private:
     typedef std::map<struct ev_io*, Watcher*> WatcherMap;
     typedef std::vector<Watcher*> WatcherList;
