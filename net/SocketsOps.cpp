@@ -25,9 +25,8 @@
 #if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
 
 #include <unistd.h>
-#include <arpa/inet.h>
 #include <strings.h>
-#include <sys/errno.h>
+#include <fcntl.h>
 
 #define ISSOCKHANDLE(x) ((x) > 0)
 #define BLOCKREADWRITE MSG_WAITALL
@@ -37,7 +36,7 @@
 #define gxsprintf sprintf_s
 #endif
 
-namespace eventpump
+namespace pump
 {
 namespace net
 {
@@ -70,7 +69,7 @@ void GetAddressFrom(sockaddr_in* addr, const char* ip, int port)
 	addr->sin_port = htons(port); /*端口号*/
 }
 
-void GetIpAddress(char* ip, sockaddr_in* addr)
+void GetIpAddress(char* ip, const sockaddr_in* addr)
 {
 	inet_ntop(AF_INET, &addr->sin_addr, ip, INET_ADDRSTRLEN);
 }
@@ -118,17 +117,18 @@ HSocket SocketOpen(int type)
 	return hs;
 }
 
-int SocketBind(HSocket hs, sockaddr_in* peeraddr)
+int SocketBind(HSocket hs, const sockaddr_in* peeraddr)
 {
 	return bind(hs, (struct sockaddr*) peeraddr, sizeof(sockaddr_in));
 }
 
 int SocketListen(HSocket hs, int maxconn)
 {
-#if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
-	return listen(hs, SOMAXCONN);
-#endif
+#if defined(Q_OS_WIN32)
 	return listen(hs, maxconn);
+#endif
+
+	return listen(hs, SOMAXCONN);
 }
 
 HSocket SocketAccept(HSocket hs, sockaddr_in* peeraddr)
@@ -147,21 +147,46 @@ struct sockaddr_in SocketGetLocalAddr(HSocket hs)
 	struct sockaddr_in localAddr;
 	bzero(&localAddr, sizeof(localAddr));
 	socklen_t localAddrLen;
-	getsockname(hs, (struct sockaddr*)&localAddr, &localAddrLen);
+	getsockname(hs, (struct sockaddr*) &localAddr, &localAddrLen);
 	return localAddr;
 }
 
 struct sockaddr_in SocketGetPeerAddr(HSocket hs)
 {
-    struct sockaddr_in peerAddr;
+	struct sockaddr_in peerAddr;
 	bzero(&peerAddr, sizeof(peerAddr));
 	socklen_t localAddrLen;
-	getpeername(hs, (struct sockaddr*)&peerAddr, &localAddrLen);
+	getpeername(hs, (struct sockaddr*) &peerAddr, &localAddrLen);
 	return peerAddr;
 }
 
+int SocketBlock(HSocket hs, bool on)
+{
+	unsigned long mode;
+	if (ISSOCKHANDLE(hs)) {
+#if defined(Q_OS_WIN32)
+		mode = on ? 0 : 1;
+		return ioctlsocket(hs, FIONBIO, &mode);
+#endif
+
+#if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
+		mode = fcntl(hs, F_GETFL, 0);                  //获取文件的flags值。
+		//设置成阻塞模式                                      //非阻塞模式
+		return on ? fcntl(hs, F_SETFL, mode & ~O_NONBLOCK) : fcntl(hs, F_SETFL, mode | O_NONBLOCK);
+#endif
+	}
+	return -1;
 }
-}
+
+void SockReuseAddress(HSocket hs, bool on)
+{
+	int mode = on ? 1 : 0;
+#if defined(Q_OS_WIN32)
+	/*todo*/
+#endif
+#if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
+	setsockopt(hs, SOL_SOCKET, SO_REUSEADDR, &mode, sizeof(mode));
+#endif
 }
 
 /*
@@ -170,7 +195,7 @@ struct sockaddr_in SocketGetPeerAddr(HSocket hs)
  * if the other side has disconnected in either block mode or nonblock mode, nbytes=0, nresult=-1,
  * otherwise nbytes= the count of bytes sent , nresult=0.
  */
-/*
+
 void SocketSend(HSocket hs, const char* ptr, int nbytes, transresult_t& rt)
 {
 	rt.nbytes = 0;
@@ -178,7 +203,7 @@ void SocketSend(HSocket hs, const char* ptr, int nbytes, transresult_t& rt)
 	if (!ptr || nbytes < 1) return;
 
 	//Linux: flag can be MSG_DONTWAIT, MSG_WAITALL, 使用MSG_WAITALL的时候, socket 必须是处于阻塞模式下，否则WAITALL不能起作用
-	rt.nbytes = send(hs, ptr, nbytes, BLOCKREADWRITE | SENDNOSIGNAL);
+	rt.nbytes = send(hs, ptr, nbytes, NONBLOCKREADWRITE);
 	if (rt.nbytes > 0) {
 		rt.nresult = (rt.nbytes == nbytes) ? 0 : 1;
 	} else if (rt.nbytes == 0) {
@@ -209,4 +234,7 @@ void SocketRecv(HSocket hs, char* ptr, int nbytes, transresult_t& rt)
 		rt.nresult = ETRYAGAIN(rt.nresult) ? 1 : -1;
 	}
 }
- */
+
+}
+}
+}

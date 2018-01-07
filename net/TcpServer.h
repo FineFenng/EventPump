@@ -13,29 +13,27 @@
 #include "Callbacks.h"
 #include "TcpConnection.h"
 
-namespace eventpump
+namespace pump
 {
 namespace net
 {
 
 class Acceptor;
-class Pump;
+class EventLoop;
 class TcpServer:boost::noncopyable
 {
 public:
-	TcpServer(Pump* pump, InetAddress& listenAddr);
+	TcpServer(EventLoop* loop, InetAddress& listenAddr);
 	~TcpServer();
 
 	void start();
-	void newConnection(int sockfd, const InetAddress& peerAddr);
+	void newConnection(int sockfd, InetAddress& peerAddr);
 	void setNewConnectionCallback(const NewConnectionCallback& cb) { newConnectionCallback_ = cb; }
 
 private:
 	typedef std::map<std::string,TcpConnectionPtr> ConnectionMap;
 
-
-
-	Pump* pump_;
+	EventLoop* loop_;
 	const std::string name_;
 	std::unique_ptr<Acceptor> acceptor_;
 	NewConnectionCallback newConnectionCallback_;

@@ -9,7 +9,7 @@
 
 #include "SocketsOps.h"
 
-namespace eventpump
+namespace pump
 {
 
 
@@ -28,7 +28,7 @@ public:
 
 public:
 	HSocket fd () const { return fd_; }
-	void bindAddress(const InetAddress& addr);
+	void bindAddress(InetAddress& addr);
 	void listen(int backlog);
 	void accept(InetAddress* addr);
 

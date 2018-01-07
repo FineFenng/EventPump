@@ -5,16 +5,16 @@
 #include "Socket.h"
 #include "InetAddress.h"
 
-using namespace eventpump::net;
+using namespace pump::net;
 
 Socket::~Socket()
 {
 	socketops::SocketClose(fd_);
 }
 
-void Socket::bindAddress(const InetAddress& addr)
+void Socket::bindAddress(InetAddress& addr)
 {
-	socketops::SocketBind(fd_, addr.getSockAddr());
+	socketops::SocketBind(fd_, addr.sockAddr());
 
 }
 
@@ -25,7 +25,7 @@ void Socket::listen(int backlog)
 
 void Socket::accept(InetAddress* addr)
 {
-	socketops::SocketAccept(fd_, addr->getSockAddr());
+	socketops::SocketAccept(fd_, addr->sockAddr());
 }
 
 

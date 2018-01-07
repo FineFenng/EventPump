@@ -4,62 +4,49 @@
 
 #include "Watcher.h"
 
-#include <cassert>
-#include "Pump.h"
+#include "EventLoop.h"
 
 
-using namespace eventpump::net;
+using namespace pump::net;
 
-namespace
+
+Watcher::Watcher(EventLoop* loop, int sockfd)
+		: loop_(loop),
+		  io_(new ev::io()),
+		  index_(-1),
+		  sockfd_(sockfd),
+		  events_(0),
+		  revents_(0)
 {
-
-void eventpump::net::Handle(ev_loop* loop, struct ev_io* io_watcher, int revents)
-{
-    Watcher* watcher = t_pump->findWatcher(io_watcher);
-
-    assert(loop == t_pump->ev_loop());
-    watcher->handle(revents);
-
+	init();
 }
 
-}
-
-
-Watcher::Watcher(Pump* pump, int sockfd)
-        : io_(static_cast<struct ev_io*>(malloc(sizeof(struct ev_io)))),
-          index_(-1), sockfd_(sockfd), events_(0), revents_(0), pump_(pump),
-          readableCallback_(), writableCallback_()
-{
-    init();
-}
-
-void Watcher::handle(int revents)
+void Watcher::operator()(ev::io& io, int revents)
 {
 
-    if (revents && EV_READ) {
-        if (readableCallback()) readableCallback()();
-    }
+	if (revents && EV_READ) {
+		if (readableCallback_) readableCallback_();
+	}
 
-    if (revents && EV_WRITE) {
-        if (writableCallback()) readableCallback()();
-    }
+	if (revents && EV_WRITE) {
+		if (writableCallback_) writableCallback_();
+	}
 }
 
 void Watcher::init()
 {
-    ev_init(io_, Handle);
-
+	io_->set(this);
 }
 
 void Watcher::updateWatcher()
 {
-    pump_->updateWatcher(this);
+	loop_->updateWatcher(this);
 }
 
 
-void Watcher::removeWathcer()
+void Watcher::removeWatcher()
 {
-    pump_->removeWatcher(this);
+	loop_->removeWatcher(this);
 }
 
 

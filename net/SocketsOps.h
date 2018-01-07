@@ -6,7 +6,7 @@
 #ifndef EVENTPUMP_CSOCKETWRAP_H
 #define EVENTPUMP_CSOCKETWRAP_H
 
-#include "platform.h"
+#include "Platform.h"
 
 
 // Win32
@@ -42,21 +42,22 @@ typedef int HSocket;
 
 typedef struct
 {
-    int block;
-    int sendbuffersize;
-    int recvbuffersize;
-    int lingertimeout;
-    int recvtimeout;
-    int sendtimeout;
+	int block;
+	int sendbuffersize;
+	int recvbuffersize;
+	int lingertimeout;
+	int recvtimeout;
+	int sendtimeout;
 } socketoption_t;
+
 
 typedef struct
 {
-    int nbytes;
-    int nresult;
+	int nbytes;
+	int nresult;
 } transresult_t;
 
-namespace eventpump
+namespace pump
 {
 namespace net
 {
@@ -70,7 +71,7 @@ void FreeSocketEnvironment();
 
 void GetAddressFrom(sockaddr_in* addr, const char* ip, int port);
 
-void GetIpAddress(char* ip, sockaddr_in* addr);
+void GetIpAddress(char* ip, const sockaddr_in* addr);
 
 bool IsValidSocketHandle(HSocket handle);
 
@@ -78,7 +79,7 @@ int GetLastSocketError();
 
 HSocket SocketOpen(int type);
 
-int SocketBind(HSocket hs, sockaddr_in* peeraddr);
+int SocketBind(HSocket hs, const sockaddr_in* peeraddr);
 
 int SocketListen(HSocket hs, int maxconn);
 
@@ -86,19 +87,18 @@ HSocket SocketAccept(HSocket hs, sockaddr_in* addr);
 
 void SocketClose(HSocket& handle);
 
-//int SocketBlock(HSocket hs, bool bblock);
+struct sockaddr_in SocketGetLocalAddr(HSocket hs);
 
-//int SocketTimeOut(HSocket hs, int recvtimeout, int sendtimeout, int lingertimeout);
+struct sockaddr_in SocketGetPeerAddr(HSocket hs);
+
+int SocketBlock(HSocket hs, bool on);
+
+void SockReuseAddress(HSocket hs, bool on);
+
 
 void SocketSend(HSocket hs, const char* ptr, int nbytes, transresult_t& rt);
 
 void SocketRecv(HSocket hs, char* ptr, int nbytes, transresult_t& rt);
-
-struct sockaddr_in SocketGetLocalAddr(HSocket hs);
-struct sockaddr_in SocketGetPeerAddr(HSocket hs);
-
-
-
 
 
 }

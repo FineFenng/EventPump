@@ -7,7 +7,6 @@
 
 
 #include <boost/noncopyable.hpp>
-#include <event2/listener.h>
 
 #include "Callbacks.h"
 
@@ -15,38 +14,40 @@
 #include "Watcher.h"
 
 
-
-namespace eventpump
+namespace pump
 {
 
 namespace net
 {
 
-class Pump;
-class InetAddress
+class EventLoop;
+
+class InetAddress;
+
 class Watcher;
+
 class Acceptor : boost::noncopyable
 {
 public:
-    Acceptor(Pump* pump, InetAddress& listenAddr, bool reuseport);
-    ~Acceptor();
+	Acceptor(EventLoop* loop, InetAddress& listenAddr, bool reuseport);
 
-    void setNewConnectionCallback(const NewConnectionCallback& cb ) { newConnectionCallback_ = cb; }
+	~Acceptor();
+
+	void setNewConnectionCallback(const NewConnectionCallback& cb) { newConnectionCallback_ = cb; }
+
 	void listen();
-	bool isListenig() const;
+
+	bool isListening() const;
 
 	void handleRead();
-public:
-private:
-
-
 
 private:
-	Pump* pump_;
+	EventLoop* loop_;
+	InetAddress listenAddr_;
 	Socket socket_;
 	Watcher watcher_;
 	bool listening_;
-    NewConnectionCallback newConnectionCallback_;
+	NewConnectionCallback newConnectionCallback_;
 
 };
 

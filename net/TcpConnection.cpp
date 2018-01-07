@@ -7,20 +7,33 @@
 #include "Socket.h"
 #include "Watcher.h"
 
-using namespace eventpump::net;
-using namespace std::placeholders;
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
 
-TcpConnection::TcpConnection(eventpump::net::Pump* pump, const std::string& name, HSocket fd,
-                             const eventpump::net::InetAddress& localAddr,
-                             const eventpump::net::InetAddress& peerAddr)
+using namespace pump::net;
+using namespace boost::placeholders;
+
+TcpConnection::TcpConnection(pump::net::EventLoop* pump, const std::string& name, HSocket fd,
+                             const pump::net::InetAddress& localAddr,
+                             const pump::net::InetAddress& peerAddr)
 		: pump_(pump), name_(name), fd_(fd), localAddr_(localAddr), peerAddr_(peerAddr),
-		  socket_(new Socket(fd_)), watcher_(std::make_shared(pump_, fd_))
+		  socket_(new Socket(fd_)), watcher_(new Watcher(pump_, fd_))
 {
-	watcher_->setReadableCallback(std::bind(&TcpConnection::handleRead, this, _1));
-	watcher_->setWritableCallback(std::bind(&TcpConnection::handleWrite, this));
+	watcher_->setReadableCallback(boost::bind(&TcpConnection::handleRead, this));
+	watcher_->setWritableCallback(boost::bind(&TcpConnection::handleWrite, this));
 }
 
 TcpConnection::~TcpConnection()
+{
+
+}
+
+void TcpConnection::handleRead()
+{
+
+}
+
+void TcpConnection::handleWrite()
 {
 
 }

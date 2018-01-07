@@ -4,7 +4,7 @@
 
 #include "InetAddress.h"
 
-using namespace eventpump::net;
+using namespace pump::net;
 
 static const char* kInaddrLoopback = "127.0.0.1";
 static const uint32_t kInaddrAny = INADDR_ANY;
@@ -23,7 +23,7 @@ InetAddress::InetAddress(uint16_t port, bool loopbackOnly)
 	addr_.sin_port = htons(port);
 }
 
-InetAddress::InetAddress(char* ip, uint16_t port)
+InetAddress::InetAddress(const char* ip, uint16_t port)
 {
 	bzero(&addr_, sizeof(addr_));
 	addr_.sin_family = AF_INET;

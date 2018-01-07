@@ -13,20 +13,20 @@
 #include "InetAddress.h"
 #include "SocketsOps.h"
 
-namespace eventpump
+namespace pump
 {
 namespace net
 {
 
 
-class Pump;
+class EventLoop;
 class InetAddress;
 class Socket;
 class Watcher;
 class TcpConnection : boost::noncopyable
 {
 public:
-	TcpConnection(Pump* pump,
+	TcpConnection(EventLoop* pump,
 	              const std::string& name,
 	              HSocket fd,
 	              const InetAddress& localAddr,
@@ -47,7 +47,7 @@ private:
 		kDisconnected,
 	};
 
-	Pump* pump_;
+	EventLoop* pump_;
 	std::string name_;
 	HSocket fd_;
 	StateE state_;
@@ -57,7 +57,6 @@ private:
 	InetAddress peerAddr_;
 
 
-	NewConnectionCallback newConnectionCallback_;
 };
 typedef std::shared_ptr<TcpConnection> TcpConnectionPtr;
 }

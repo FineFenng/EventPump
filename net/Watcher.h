@@ -5,78 +5,66 @@
 #ifndef EVENTPUMP_WATCHER_H
 #define EVENTPUMP_WATCHER_H
 
-#include <ev.h>
 #include <boost/noncopyable.hpp>
+#include <ev++.h>
 
 #include "Callbacks.h"
 
-
-namespace eventpump
+namespace pump
 {
-
-
-enum class EVENT
-{
-    kRead = EV_READ,
-    kWrite = EV_WRITE,
-};
 
 namespace net
 {
 
-
-class Pump;
+class EventLoop;
 class Watcher : boost::noncopyable
 {
-
 public:
-    Watcher(Pump* pump, int sockfd);
+    Watcher(EventLoop *loop, int sockfd);
 
-    friend void Handle(ev_loop* loop, struct ev_io* io_watcher, int revents);
 
     ReadableCallback readableCallback() const { return readableCallback_; }
     WritableCallback writableCallback() const { return writableCallback_; }
 
-    bool isReadable() { return static_cast<bool>(events_ &= EV_READ ); }
-    bool isWritable() { return static_cast<bool>(events_ &= EV_WRITE); }
+    bool isReadable() { return static_cast<bool>(events_ &= ev::READ ); }
+    bool isWritable() { return static_cast<bool>(events_ &= ev::WRITE); }
 
-    void enableReadable() { events_ |= EV_READ ; updateWatcher(); }
-    void enableWritable() { events_ |= EV_WRITE; updateWatcher(); }
+    void enableReadable() { events_ |= ev::READ ; updateWatcher(); }
+    void enableWritable() { events_ |= ev::WRITE; updateWatcher(); }
 
-    void disableReadable() { events_ &= ~EV_READ; updateWatcher(); }
-    void disableWritable() { events_ &= ~EV_WRITE; updateWatcher(); }
+    void disableReadable() { events_ &= ~ev::READ; updateWatcher(); }
+    void disableWritable() { events_ &= ~ev::WRITE; updateWatcher(); }
     void disableAll() { events_ = 0; updateWatcher(); }
 
-    void setReadableCallback(const ReadableCallback& cb) const { readableCallback_ = cb; }
-    void setWritableCallback(const WritableCallback& cb) const { writableCallback_ = cb; }
+    void setReadableCallback(const ReadableCallback& cb) { readableCallback_ = cb; }
+    void setWritableCallback(const WritableCallback& cb) { writableCallback_ = cb; }
 
     ssize_t index() const { return index_; }
     void setIndex(ssize_t idx) { index_ = idx; }
     int events() const { return events_; }
     int revents() const { return revents_; }
-    Pump* pump() const { return pump_; }
+    EventLoop* pump() const { return loop_; }
     int fd() const { return sockfd_;}
-    struct ev_io* io() const { return io_; }
+    ev::io* io() const { return io_; }
 
-	void removeWathcer();
+	void operator()(ev::io& io, int revents);
+	void removeWatcher();
 private:
     void init();
-    void handle(int revents);
     void updateWatcher();
 private:
 
     ssize_t index_;
     int events_;
     int revents_;
-    Pump* pump_;
+    EventLoop* loop_;
     int sockfd_;
-    struct ev_io* io_;
+    ev::io* io_;
 
-    ReadableCallback readableCallback_;
+	ReadableCallback readableCallback_;
     WritableCallback writableCallback_;
 };
 
-void Handle(ev_loop* loop, struct ev_io* io_watcher, int revents);
 }
 }
 

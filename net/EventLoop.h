@@ -6,13 +6,15 @@
 #define EVENTPUMP_PUMP_H
 
 #include <boost/noncopyable.hpp>
-
-#include <ev.h>
+#include <ev++.h>
 #include <map>
+#include <thread>
 #include <vector>
 
-namespace eventpump
+
+namespace pump
 {
+
 enum class BACKEND : unsigned int
 {
     kDefault = EVFLAG_AUTO,
@@ -22,49 +24,46 @@ enum class BACKEND : unsigned int
     kKQueue = EVBACKEND_KQUEUE,
 };
 
+
+/*
+
 enum class RUN : int
 {
     kNOWAIT = EVRUN_NOWAIT,
     kONCE = EVRUN_ONCE,
 };
 
+ */
 
 namespace net
 {
 
-class Pump;
-
-thread_local Pump* t_pump = nullptr;
-
+class EventLoop;
 class Watcher;
-class Pump : boost::noncopyable
+
+class EventLoop : boost::noncopyable
 {
 public:
-
-    explicit Pump(BACKEND backend);
-    Pump();
-
-    ~Pump();
+    explicit EventLoop(BACKEND backend = BACKEND::kDefault);
+    ~EventLoop();
 
 public:
-    void run(RUN runOption);
+    void run();
     void stop();
-    Watcher* findWatcher(struct ev_io* watcher) const;
 
 public:
-    struct ev_loop* ev_loop() const { return loop_; }
     void updateWatcher(Watcher* watcher);
     void removeWatcher(Watcher* watcher);
-
 
 private:
     BACKEND flags_;
     struct ev_loop* loop_;
 	bool running_;
+	std::thread::id threadId_;
+
 private:
-    typedef std::map<struct ev_io*, Watcher*> WatcherMap;
     typedef std::vector<Watcher*> WatcherList;
-    WatcherMap watcherMap_;
+
     WatcherList watcherList_;
 };
 

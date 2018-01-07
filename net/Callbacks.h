@@ -5,22 +5,20 @@
 #ifndef EVENTPUMP_CALLBACKS_H
 #define EVENTPUMP_CALLBACKS_H
 
-
-#include <functional>
+#include <boost/function.hpp>
 #include "SocketsOps.h"
 #include "InetAddress.h"
 
 
-namespace eventpump
+namespace pump
 {
 
 namespace net
 {
 
-typedef std::function<void()> ReadableCallback;
-typedef std::function<void()> WritableCallback;
-typedef std::function<void(HSocket, InetAddress&)> NewConnectionCallback;
-
+typedef boost::function<void()> ReadableCallback;
+typedef boost::function<void()> WritableCallback;
+typedef boost::function<void(HSocket, InetAddress&)> NewConnectionCallback;
 
 }
 }
