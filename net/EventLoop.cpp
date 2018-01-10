@@ -5,7 +5,6 @@
 #include "EventLoop.h"
 
 #include <glog/logging.h>
-#include <iostream>
 
 #include "Watcher.h"
 
@@ -15,7 +14,11 @@ using namespace pump::net;
 thread_local EventLoop* t_eventLoop = nullptr;
 
 EventLoop::EventLoop(BACKEND flags)
-		: flags_(flags), loop_(nullptr), running_(false), threadId_()
+		: flags_(flags),
+		  loop_(nullptr),
+		  running_(false),
+		  threadId_(),
+		  idle_()
 {
 
 	if (t_eventLoop == nullptr) {
@@ -23,9 +26,13 @@ EventLoop::EventLoop(BACKEND flags)
 		threadId_ = std::this_thread::get_id();
 		std::cout << "EventLoop[" << this << "] created in thread " << threadId_ << std::endl;
 
-		if (!(loop_ = ev_loop_new(static_cast<unsigned int>(flags_)))) {
+		if (!(loop_ = ev_loop_new(EVBACKEND_KQUEUE))) {
 			std::cout << "Initial ev_loop struct failed" << std::endl;
 		}
+
+		idle_.set(loop_);
+		idle_.set<EventLoop, &EventLoop::executeIdleEvent>(this);
+		idle_.start();
 
 	} else {
 		std::cout << "Another EventLoop[" << t_eventLoop << "] exits in thread " << threadId_ << std::endl;
@@ -45,6 +52,7 @@ void EventLoop::run()
 
 void EventLoop::stop()
 {
+	idle_.stop();
 	ev_break(loop_);
 }
 
@@ -76,8 +84,25 @@ void EventLoop::removeWatcher(Watcher* watcher)
 		watcherList_[idx] = lastWatcher;
 		lastWatcher->setIndex(idx);
 	}
-	ev_io_stop(loop_, deletedWatcher->io());
+	deletedWatcher->io()->stop();
 	watcherList_.pop_back();
+}
+
+void EventLoop::executeIdleEvent(ev::idle& idle, int revents)
+{
+
+	if (!idleWatcherEventList_.empty()) {
+		std::vector<IdleCallback> cbs;
+
+		{
+			std::lock_guard<std::mutex> lock(mutex_);
+			cbs.swap(idleWatcherEventList_);
+		}
+
+		for (auto it : cbs) {
+			it();
+		}
+	}
 }
 
 

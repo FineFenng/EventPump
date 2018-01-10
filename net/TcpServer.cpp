@@ -3,10 +3,13 @@
 //
 
 #include "TcpServer.h"
+#include "TcpConnection.h"
+#include "EventLoopThreadPool.h"
 #include "Acceptor.h"
+#include "EventLoop.h"
 #include <boost/bind.hpp>
+#include <cassert>
 
-#include <glog/logging.h>
 #include <iostream>
 
 using namespace pump::net;
@@ -16,17 +19,22 @@ TcpServer::TcpServer(EventLoop* loop, InetAddress& listenAddr)
 		: loop_(loop),
 		  name_(listenAddr.toIpPort()),
 		  acceptor_(new Acceptor(loop_, listenAddr, true)),
+		  threadNum_(0),
 		  started_(false),
-		  nextConnId_(1)
+		  nextConnId_(1),
+		  loops_(),
+		  threadPool_(new EventLoopThreadPool(loop_))
 {
 	acceptor_->setNewConnectionCallback(boost::bind(&TcpServer::newConnection, this, _1, _2));
 	std::cout << "建立服务器成功" << std::endl;
+	initialEventLoopThreadPool();
 }
 
 void TcpServer::start()
 {
 	if (!started_) {
 		started_ = true;
+		threadPool_->start();
 	}
 
 	if (!acceptor_->isListening()) {
@@ -46,15 +54,42 @@ void TcpServer::newConnection(int sockfd, InetAddress& peerAddr)
 	          << "] from " << peerAddr.toIpPort() << std::endl;
 
 	InetAddress localAddr(socketops::SocketGetLocalAddr(sockfd));
-	TcpConnectionPtr conn(new TcpConnection(loop_, connName, sockfd, localAddr, peerAddr));
+	EventLoop* nextLoop = threadPool_->getNextLoop();
+	TcpConnectionPtr conn(new TcpConnection(nextLoop, connName, sockfd, localAddr, peerAddr));
 	connections_[connName] = conn;
+	conn->setMessageCallback(messageCallback_);
+	conn->setClosedCallback(boost::bind(&TcpServer::removeConnection, this, _1));
 	newConnectionCallback_(sockfd, peerAddr);
+
 }
 
 TcpServer::~TcpServer()
 {
-
-
-
 }
 
+void TcpServer::removeConnection(const TcpConnectionPtr& conn)
+{
+	loop_->queueInIdleEventList(boost::bind(&TcpServer::removeConnectionInIdle, this, conn));
+}
+
+
+void TcpServer::removeConnectionInIdle(const TcpConnectionPtr& conn)
+{
+	size_t n = connections_.erase(conn->name());
+	assert(n == 1);
+	EventLoop* ioLoop = conn->getLoop();
+	ioLoop->queueInIdleEventList(boost::bind(&TcpConnection::connectDestoryed, conn));
+}
+
+void TcpServer::initialEventLoopThreadPool()
+{
+	threadPool_->setThreadNum(threadNum_);
+}
+
+void TcpServer::setThreadNum(int threadNum)
+{
+
+	if (threadNum < threadNum_) {
+		threadNum_ = threadNum;
+	}
+}

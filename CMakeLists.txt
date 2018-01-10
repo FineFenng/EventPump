@@ -3,9 +3,20 @@ project(EventPump)
 
 set(CMAKE_CXX_STANDARD 11)
 
-include_directories(~/MyInclude)
+add_executable(EventPump
+               net/Callbacks.h
+               net/Platform.h
+               net/conn_test.cpp
+               net/Acceptor.cpp
+               net/Socket.cpp
+               net/Watcher.cpp
+               net/EventLoop.cpp
+               net/SocketsOps.cpp
+               net/InetAddress.cpp
+               net/TcpConnection.cpp
+               net/TcpServer.cpp
+               )
 
-add_library(EventPump library.cpp library.h net/EventLoop.cpp net/EventLoop.h net/Poller.cpp net/Poller.h net/Channel.cpp net/Channel.h net/Callbacks.h tests/event_base_configs.cpp)
+target_link_libraries(EventPump libev.dylib libglog.dylib pthread)
 
-target_link_libraries(EventPump libevent_core.dylib libevent_extra.dylib libextra_pthread.dylib)
 

@@ -6,10 +6,14 @@
 #define EVENTPUMP_PUMP_H
 
 #include <boost/noncopyable.hpp>
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
 #include <ev++.h>
 #include <map>
+#include <mutex>
 #include <thread>
 #include <vector>
+#include <iostream>
 
 
 namespace pump
@@ -17,11 +21,11 @@ namespace pump
 
 enum class BACKEND : unsigned int
 {
-    kDefault = EVFLAG_AUTO,
-    KSelect = EVBACKEND_SELECT,
-    KPoll = EVBACKEND_POLL,
-    KEPoll = EVBACKEND_EPOLL,
-    kKQueue = EVBACKEND_KQUEUE,
+	kDefault = EVFLAG_AUTO,
+	KSelect = EVBACKEND_SELECT,
+	KPoll = EVBACKEND_POLL,
+	KEPoll = EVBACKEND_EPOLL,
+	kKQueue = EVBACKEND_KQUEUE,
 };
 
 
@@ -38,33 +42,51 @@ enum class RUN : int
 namespace net
 {
 
-class EventLoop;
 class Watcher;
 
 class EventLoop : boost::noncopyable
 {
 public:
-    explicit EventLoop(BACKEND backend = BACKEND::kDefault);
-    ~EventLoop();
+	explicit EventLoop(BACKEND backend = BACKEND::kDefault);
+
+	~EventLoop();
 
 public:
-    void run();
-    void stop();
+	void run();
+
+	void stop();
 
 public:
-    void updateWatcher(Watcher* watcher);
-    void removeWatcher(Watcher* watcher);
+	void updateWatcher(Watcher* watcher);
+
+	void removeWatcher(Watcher* watcher);
+
+public:
+	typedef boost::function<void()> IdleCallback;
+
+	void queueInIdleEventList(const IdleCallback& cb)
+	{
+		idleWatcherEventList_.push_back(cb);
+	}
+
+	void executeIdleEvent(ev::idle& idle, int revents);
+
 
 private:
-    BACKEND flags_;
-    struct ev_loop* loop_;
+	BACKEND flags_;
+	struct ev_loop* loop_;
 	bool running_;
 	std::thread::id threadId_;
 
-private:
-    typedef std::vector<Watcher*> WatcherList;
 
-    WatcherList watcherList_;
+private:
+	typedef std::vector<Watcher*> IOWatcherList;
+	typedef std::vector<boost::function<void()>> IdleEventList;
+	ev::idle idle_;
+
+	IOWatcherList watcherList_;
+	IdleEventList idleWatcherEventList_;
+	std::mutex mutex_;
 };
 
 }

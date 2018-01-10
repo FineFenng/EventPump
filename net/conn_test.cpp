@@ -4,7 +4,6 @@
 
 #include "TcpServer.h"
 #include "EventLoop.h"
-#include <iostream>
 
 using namespace pump::net;
 
@@ -14,17 +13,26 @@ static int count = 0;
 
 void ewConnectionCallback(HSocket fd, InetAddress& cliAddr)
 {
-	std::cout << "Socket is" << fd;
 }
+
+void messageTest(const TcpConnectionPtr& conn, Buffer* buffer)
+{
+	std::cout << buffer->retrieveAsString() << std::endl;
+}
+
+
+
 
 
 
 int main(int argc, char* argv[])
 {
+
 	EventLoop loop;
-	InetAddress serverAddr("192.168.2.172", 9999);
+	InetAddress serverAddr("192.168.2.172", 9997);
 	TcpServer server(&loop, serverAddr);
 	server.setNewConnectionCallback(ewConnectionCallback);
+	server.setMessageCallback(messageTest);
 	server.start();
 	loop.run();
 }
